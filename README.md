@@ -25,7 +25,7 @@
 (**Note:** **`JSON`** format was introduced in **`Snort 3`**, for this exercise we are running on **`Snort version 2.9.20`**, so it is not available for us to configure at this time).
 
 ### 🔸Step 2: Configure Snort Logging
-Edit the **`Snort`** configuration file: **`sudo nano /etc/snort/snort.conf`**
+**🔵 Edit the Snort configuration file:** *`sudo nano /etc/snort/snort.conf`*
 
 [Insert Screenshot] snort_conf.png
 
@@ -73,11 +73,11 @@ This stores alerts in **`/var/log/snort/alert.log`** in a human-readable format.
 
 Once logging is enabled and **`Snort`** is running, you can check alerts using the following commands:
 
-**📜 View the last 10 alerts:** **`sudo tail -n 10 /var/log/snort/alert.log`**
+**📜 View the last 10 alerts:** *`sudo tail -n 10 /var/log/snort/alert.log`*
 
-**📜 Monitor alerts in real time:** **`sudo tail -f /var/log/snort/alert.log`**
+**📜 Monitor alerts in real time:** *`sudo tail -f /var/log/snort/alert.log`*
 
-**📜 Search for specific alerts (e.g., ICMP traffic):** **`sudo grep "ICMP" /var/log/snort/alert.log`**
+**📜 Search for specific alerts (e.g., ICMP traffic):** *`sudo grep "ICMP" /var/log/snort/alert.log`*
 
 **🔹Why Use Plain Text Logging:**
 
@@ -127,15 +127,15 @@ A **`PCAP`** log does **not** contain human-readable text like **`JSON`** or **`
 
 Once **`PCAP`** logging is enabled and **`Snort`** is running, you can inspect captured packets using:
 
-**📜 Check if the PCAP log file exists:** **`ls -l /var/log/snort/log.pcap`**
+**📜 Check if the PCAP log file exists:** *`ls -l /var/log/snort/log.pcap`*
 
-**📜 Analyze the PCAP log using tcpdump:** **`sudo tcpdump -r /var/log/snort/log.pcap`**
+**📜 Analyze the PCAP log using tcpdump:** *`sudo tcpdump -r /var/log/snort/log.pcap`*
 
-**📜 Open the PCAP log in Wireshark (GUI):** **`wireshark /var/log/snort/log.pcap`**
+**📜 Open the PCAP log in Wireshark (GUI):** *`wireshark /var/log/snort/log.pcap`*
 
-**📜 Filter PCAP logs to show only HTTP traffic:** **`sudo tcpdump -r /var/log/snort/log.pcap -nn -A port 80`**
+**📜 Filter PCAP logs to show only HTTP traffic:** *`sudo tcpdump -r /var/log/snort/log.pcap -nn -A port 80`*
 
-**📜 Extract and display only source/destination IPs from the PCAP log:** **`sudo tcpdump -r /var/log/snort/log.pcap -nn -q`**
+**📜 Extract and display only source/destination IPs from the PCAP log:** *`sudo tcpdump -r /var/log/snort/log.pcap -nn -q`*
 
 **🔹Why Use PCAP Logging?**
 
@@ -147,6 +147,75 @@ Once **`PCAP`** logging is enabled and **`Snort`** is running, you can inspect c
 
 **✅ Ideal for Network Forensics & Incident Response:** Helps **correlate attack patterns** and **understand adversary techniques**.
 
+### 🔸Step 3: Create the Logging Directory
+
+Before **`Snort`** can store its logs, you must create a dedicated directory and configure the proper permissions. This ensures that **`Snort`** can write logs securely and prevents permission issues during runtime.
+
+**🔹Why Do We Need a Logging Directory?**
+
+**✅ Ensures Snort has a specific location** to store logs such as alerts, packet captures, and event data.
+
+**✅ Prevents permission issues** that could cause **`Snort`** to fail when trying to write logs.
+
+**✅ Improves organization** by keeping all **`Snort`** logs in one central location.
+
+**✅ Enhances security** by restricting access to **`Snort’s`** log files.
+
+
+**🔵 Create the Logging Directory:** *`sudo mkdir -p /var/log/snort`*
+
+[Insert Screenshot] create_log_directory.png
+
+**Command Breakdown:**
+
+| **Command** | **Explanation** |
+|-|-|
+| *`sudo`* | Runs the command with superuser (**`root`**) privileges to avoid permission issues.|
+| *`mkdir`* | Creates a new directory.|
+| *`-p`* | Ensures that if the directory already exists, it won’t return an error.|
+
+**🔹Why use /var/log/snort?**
+
+✅ The **`/var/log/`** directory is the standard location for system and application logs.
+
+✅ Keeping **`Snort`** logs here maintains consistency with Linux logging conventions.
+
+**🔵 Set the Correct Permissions:** *`sudo chmod -R 755 /var/log/snort`*
+
+[Insert Screenshot] Set_permissions.png
+
+**Command Breakdown:**
+
+| **Command** | **Explanation** |
+|-|-|
+| *`sudo`* | Runs the command with superuser (**`root`**) privileges to avoid permission issues.|
+| *`chmod`* | Changes file/directory permissions.|
+| *`-R`* | Recursively applies the permission change to all files and subdirectories.|
+| *`755`* | Assigns **read, write, and execute (rwx) permissions** to the owner, and **read and execute (r-x) permissions** to others.|
+
+**🔹What does *755* mean?**
+
+**✅ Owner (snort):** Read, write, and execute (**rwx**) = 7
+
+**✅ Group (snort):** Read and execute (**r-x**) = 5
+
+**✅ Others:** Read and execute (**r-x**) = 5
+
+This setup ensures that **`Snort`** can write logs, but other users cannot modify them.
+
+**🔵 Set Ownership to the Snort User:** *`sudo chown -R snort:snort /var/log/snort`*
+
+[Insert Screenshot] Set_ownership.png
+
+**Command Breakdown:**
+
+| **Command** | **Explanation** |
+|-|-|
+| *`sudo`* | Runs the command with superuser (**`root`**) privileges to avoid permission issues.|
+| *`chown`* | Changes ownership of a file or directory.|
+| *`-R`* | Recursively applies the ownership change to all files and subdirectories.|
+| *`snort:snort`* | Assigns both user (`snort`) and group (`snort`) ownership.|
+| *`/var/log/snort`* | Target directory where ownership is changed.|
 
 
 
