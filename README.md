@@ -9,6 +9,7 @@
 **`Snort`** offers versatile logging options, including **`Plain Text`**, **`JSON`**, **`PCAP`**, and more, allowing flexible data analysis and integration with other security tools. In this exercise, we'll configure and learn different aspects of Snort’s logging settings, set up proper directory permissions, test the logging output, and address common troubleshooting scenarios you might encounter when using **`Plain Text`** and **`PCAP`** logging.
 
 ### 🔸Step 1: Choose a Logging Format
+
 **`Snort`** supports multiple logging formats depending on your needs:
 
 
@@ -25,13 +26,14 @@
 (**Note:** **`JSON`** format was introduced in **`Snort 3`**, for this exercise we are running on **`Snort version 2.9.20`**, so it is not available for us to configure at this time).
 
 ### 🔸Step 2: Configure Snort Logging
+
 **🔵 Edit the Snort configuration file:** *`sudo nano /etc/snort/snort.conf`*
 
-[Insert Screenshot] snort_conf.png
+![image](https://github.com/user-attachments/assets/5e76948e-bfc5-424a-a76a-52d4f7727ef6)
 
 Then, locate the **`(Step #6: Configure output plugins)`** section, scroll down and uncomment or add any of the following logging methods (e.g., **`Plain Text`**, **`PCAP`**, etc.) you prefer:
 
-[Insert Screenshot] configure_output_plugins.png
+![image](https://github.com/user-attachments/assets/049d7935-1f20-4bbf-b396-00fe84239617)
 
 #### 🟢 Enable Plain Text Logging (Default)
 **`Plain Text`** logging is the simplest and most straightforward way to capture and review **`Snort`** alerts. When enabled, **`Snort`** writes alerts directly to a log file in an easy-to-read format. This method is useful for basic monitoring, debugging, and quick analysis without requiring additional tools.
@@ -41,10 +43,12 @@ Add the following output directive to the **`Snort`** configuration file (**`sno
 **Output Directive:** **`output alert_fast: /var/log/snort/alert.log`**
 
 Before:
-[Insert Screenshot] plaintext_before.png
+
+![image](https://github.com/user-attachments/assets/9ab63d47-6e9d-4b1c-a350-4d26ab598111)
 
 After:
-[Insert Screenshot] plaintext_after.png
+
+![image](https://github.com/user-attachments/assets/cb5acb89-4fa9-4d4a-853e-2706011c61e8)
 
 | **Part** | **Explanation** |
 |-|-|
@@ -99,7 +103,7 @@ Add the following output directive to the **`Snort`** configuration file (**`sno
 
 **Output Directive:** **`output log_tcpdump: /var/log/snort/log.pcap`**
 
-[Insert Screenshot] log_pcap.png
+![image](https://github.com/user-attachments/assets/fa026409-6c6b-4eba-9473-8fb347271c31)
 
 | **Part** | **Explanation** |
 |-|-|
@@ -147,7 +151,7 @@ Once **`PCAP`** logging is enabled and **`Snort`** is running, you can inspect c
 
 **✅ Ideal for Network Forensics & Incident Response:** Helps **correlate attack patterns** and **understand adversary techniques**.
 
-### 🔸Step 3: Create the Logging Directory
+### 🔸Step 3: Create and Configure the Logging Directory
 
 Before **`Snort`** can store its logs, you must create a dedicated directory and configure the proper permissions. This ensures that **`Snort`** can write logs securely and prevents permission issues during runtime.
 
@@ -161,10 +165,9 @@ Before **`Snort`** can store its logs, you must create a dedicated directory and
 
 **✅ Enhances security** by restricting access to **`Snort’s`** log files.
 
-
 **🔵 Create the Logging Directory:** *`sudo mkdir -p /var/log/snort`*
 
-[Insert Screenshot] create_log_directory.png
+![image](https://github.com/user-attachments/assets/5d230907-19f1-42c0-af10-7d06e5ba8107)
 
 **Command Breakdown:**
 
@@ -182,7 +185,7 @@ Before **`Snort`** can store its logs, you must create a dedicated directory and
 
 **🔵 Set the Correct Permissions:** *`sudo chmod -R 755 /var/log/snort`*
 
-[Insert Screenshot] Set_permissions.png
+![image](https://github.com/user-attachments/assets/dc445b30-6d9a-4c6c-9012-8d81c24c7450)
 
 **Command Breakdown:**
 
@@ -205,7 +208,7 @@ This setup ensures that **`Snort`** can write logs, but other users cannot modif
 
 **🔵 Set Ownership to the Snort User:** *`sudo chown -R snort:snort /var/log/snort`*
 
-[Insert Screenshot] Set_ownership.png
+![image](https://github.com/user-attachments/assets/7635cbc9-5d4c-48a8-9480-4bcafce16909)
 
 **Command Breakdown:**
 
@@ -216,6 +219,333 @@ This setup ensures that **`Snort`** can write logs, but other users cannot modif
 | *`-R`* | Recursively applies the ownership change to all files and subdirectories.|
 | *`snort:snort`* | Assigns both user (`snort`) and group (`snort`) ownership.|
 | *`/var/log/snort`* | Target directory where ownership is changed.|
+
+**🔹Why change Ownership?**
+
+✅ **`Snort`** runs under the `snort` user, not `root`.
+
+✅ Giving ownership to `snort` allows **`Snort`** to write logs without requiring `root` privileges.
+
+### 🔸Step 4: Verifying the Logging Directory Setup
+
+**🔵 Check directory existence:** *`ls -ld /var/log/snort`*
+
+**Expected Output:**
+
+![image](https://github.com/user-attachments/assets/1348913b-4307-451c-a859-4b10ef434cc5)
+
+**Output Explanation:**
+
+|✅ **`drwxr-xr-x → 755 permissions`**|
+|-|
+**Note:** If you receive **`drwxr-sr-x`** instead of **`drwxr-xr-x`**, this is due to the **`setgid (Set Group ID)`** bit being enabled on the directory. This is safe and even recommended, ensuring that any new files created inside the directory inherit the group ownership (`snort`) rather than the user’s primary group.
+
+|**Output** | **Explanation** |
+|-|-|
+| `d` | Directory|
+| `rwx` **(Owner: snort)** | Full read (`r`), write (`w`), and execute (`x`) permissions.|
+| `r-s` **(Group: snort)** | Read (`r`) and execute (`x`) permissions, but with the setgid (`s`) bit enabled. |
+| `r-x` **(Others)** | Read (`r`) and execute (`x`) permissions for all users.|
+| `snort snort` | Correct Ownership|
+
+**🔵 Check file permissions recursively:** *`ls -l /var/log/snort/`*
+
+**Expected Output:**
+
+![image](https://github.com/user-attachments/assets/54271393-456d-42c8-b636-67d3d03310db)
+
+(**Note:** If your output includes `.gz` files, this means `Snort` is automatically compressing older log files using `gzip`. This happens when `log rotation` is enabled in your system.)
+
+`Snort` generates multiple log files based on the output configurations in the `snort.conf` file. Each log file serves a different purpose. If you only want `alert.log`, you need to modify `Snort's` `log rotation/logging` settings.
+
+**Understanding Common Snort Log Files:**
+
+|**File Name** | **Description** |
+|-|-|
+| `alert.log` | The current alert log (human-readable format).|
+| `snort.alert` | Default `Snort` alert file (similar to `alert.log`).|
+| `snort.alert.fast` | Alerts in a simplified, human-readable format.|
+| `snort.alert.fast.1.gz` | Rotated and compressed version of `snort.alert.fast`.|
+| `snort.log` | Packet logging (binary format).|
+| `snort.log.1.gz` | Rotated and compressed version of `snort.log`.|
+| `log.pcap.xxxxxxxxxx` | Captured packets (if `log_pcap` is enabled).|
+
+**🔵 Confirm Snort can write to the directory:** *`sudo -u snort touch /var/log/snort/test.log && ls -l /var/log/snort/test.log`*
+
+**Expected Output:**
+
+![image](https://github.com/user-attachments/assets/99bf4602-d53e-48bb-815e-3dde359474ee)
+
+**Output Explanation:**
+
+|**Output** | **Explanation** |
+|-|-|
+| `-rw-rw-r--` | This shows the file permissions for `test.log`. |
+| `-` | Indicates a regular file. |
+| `rw-` **(Owner: snort)** | Full read (`r`), and write (`w`) permissions.|
+| `rw-` **(Group: snort)** | Full read (`r`), and write (`w`) permissions.|
+| `r--` **(Others)** | Read only (`r`). |
+| `1` | The number of hard links to the file (in this case, it’s just 1). |
+| `snort snort` | This indicates that the `owner` and `group` of the file are both set to `snort`. |
+
+🛑 If there’s an error, check ownership and permissions again.
+
+### 🔸Step 5: Configure for Console Mode and Log Alerts
+
+If you want to see real-time alerts in the terminal (`Console Mode`) and log them (`alert.log`), update your `Snort` configuration file.
+
+**🔵 Edit the Snort configuration file:** *`sudo nano /etc/snort/snort.conf`*
+
+Find the output logging section and enable the following Output Directives:
+
+**Output Directive:** **`output alert_fast: stdout`**
+
+**Output Directive:** **`output alert_fast: /var/log/snort/alert.log`**
+
+![image](https://github.com/user-attachments/assets/98221bfd-7956-4a6f-971b-e23fb65993ea)
+
+Save & exit.
+
+This ensures alerts are printed to the terminal (`stdout`) and saved to `alert.log`.
+
+**🔵 Restart Snort:** *`sudo systemctl restart snort`*
+
+### 🔸Step 6: Test Logging Output
+
+After configuring `Snort’s` logging settings and setting up the `/var/log/snort/` directory, you can verify that `Snort` is generating logs correctly when we test our custom rules later during this exercise. This command ensures that `Snort` is capturing alerts and storing them in the configured log file (`alert.log`).
+
+**🔵 To check if Snort is logging correctly, run:** *`sudo tail -f /var/log/snort/alert.log`*
+
+**Command Breakdown:**
+
+| **Command** | **Explanation** |
+|-|-|
+| *`sudo`* | Runs the command with superuser (**`root`**) privileges to avoid permission issues.|
+| *`tail`* | Displays the last few lines of a file.|
+| *`-f`* | Follows the log file in real time, showing new entries as they appear. |
+| *`snort:snort`* | Assigns both user (`snort`) and group (`snort`) ownership.|
+| *`/var/log/snort/alert.log`* | Target directory where log file is located. |
+ 
+This will show real-time alerts once `Snort` detects suspicious activity.
+
+### 🔸Step 7: Troubleshooting Logging Output
+
+If alerts are printed in the terminal (`Console Mode`), but not being logged in the `alert.log` file, check the current status of the `Snort` service on your system. 
+
+**🔵 Check Snort status:** *`sudo systemctl status snort`*
+
+![image](https://github.com/user-attachments/assets/01122117-8260-4c30-803d-7d33059bfaed)
+
+`Snort` failed to start, as seen above:
+
+**Output Explanation:**
+
+|**Output** | **Explanation** |
+|-|-|
+| **Active: failed (Result: exit-code)** | `Snort` failed to start. |
+| **status=1/FAILURE** | The exit code suggests an issue, often a misconfiguration. |
+| **Process: xxxxx ExecStart=... (code=exited, status=1/FAILURE)** | Shows which command failed. |
+
+In this case, “**`Loaded: loaded (/etc/systemd/system/snort.service`**” indicates that the `Snort` service unit file exists and is recognized by `systemd`, but it does not confirm that `Snort` is running correctly, `Snort` tried to start but encountered an error from the `snort.service` file.
+
+To resolve this issue, ensure that the `snort.service` unit file isn’t empty, if so, correctly configure the file with the parameters shown in the screenshot below.
+
+**🔵 Edit the Snort service file:** *`sudo nano /etc/systemd/system/snort.service`*
+
+(**Note:** For `Snort` to open raw sockets (for sniffing network traffic), it typically needs to be run with elevated privileges. Therefore, configure `snort.service` to run `Snort` as `root` by adjusting the `User` and `Group` directives in the service unit file, as shown below.)
+
+![image](https://github.com/user-attachments/assets/f99cf1cc-ae96-4d57-a055-8a8d9698eac6)
+
+Save & exit.
+
+Next, reload `systemd` to apply the changes and then restart `Snort`.
+
+**🔵 Reload systemd:** *`sudo systemctl daemon-reload`*
+
+**🔵 Restart Snort:** *`sudo systemctl restart snort`*
+
+## 2. Creating Custom Snort Rules
+
+`Snort` rules define what network traffic should trigger an alert.
+
+### 🔸Step 1: Understanding Snort Rule Structure
+
+`Snort` rules follow a standard format:
+
+| [action] [protocol] [source IP] [source port] -> [destination IP] [destination port] (rule options) |
+|-|
+
+|**Part** | **Explanation** |
+|-|-|
+| **Action** | What to do when traffic matches (e.g., alert, log, drop). |
+| **Protocol** | Which protocol to monitor (e.g., tcp, udp, icmp, ip). |
+| **->** | Arrow indicating traffic from Source to Destination. |
+| **Source IP & Port** | Where the traffic originates. |
+| **Destination IP & Port** | The intended target. |
+| **Rule Options** | Additional details like alert messages, thresholds, and payload content. |
+
+### 🔸Step 2: Edit the Local Rules file with Custom Rules
+
+Edit the `local.rules` file to add your custom rules.
+
+**🔵 Edit local rules file:** *`sudo nano /etc/snort/rules/local.rules`*
+
+![image](https://github.com/user-attachments/assets/8c7590cf-c8b7-4c80-891a-ebfd2823e34f)
+
+If the `local.rules` file doesn’t exist, create it.
+
+### 🔸Step 3: Writing Custom Rules
+
+The following are some common custom `Snort` rules that you can add to the `local.rules` file.
+
+(Note: Verify punctuation and spaces are written and followed correctly when adding each of the custom rules. Otherwise, `Snort` will not detect the custom rules.)
+
+**✅ Detect ICMP Ping (Ping Sweep)**
+
+This rule detects network scans using `ICMP` (ping requests).
+
+| alert icmp any any -> any any (msg:"ICMP Ping Detected"; sid:1000001; rev:1;) |
+|-|
+
+![image](https://github.com/user-attachments/assets/9b120555-4dd0-44fe-b0a7-6afde2f34508)
+
+|**Part** | **Explanation** |
+|-|-|
+| **alert** | Specifies the action `Snort` should take when the rule is triggered (generate an alert). |
+| **icmp** | The protocol being monitored. |
+| **any any** | Monitors traffic from any `source IP` and any `source port`. |
+| **->** | Arrow indicating traffic from Source to Destination. |
+| **any any** | Monitors traffic to any `destination IP` and any `destination port`. |
+| **msg:"ICMP Ping Detected"** | The message that appears in logs when this rule is triggered. |
+| **sid:1000001** | `Snort Rule ID` (unique identifier for this rule) (must be >= 1000000 for custom rules). |
+| **rev:1** | `Rule revision number` (used for version tracking) (increment this number when modifying rules). |
+
+**✅ Detect SSH Brute Force Attempts**
+
+This rule alerts if multiple connection attempts to an `SSH` server (`port 22`) occur within `60 seconds`.
+
+| alert tcp any any -> any 22 (msg:"Possible SSH Brute Force"; flags:S; threshold:type both, track by_src, count 5, seconds 60; sid:1000002; rev:1;) |
+|-|
+
+![image](https://github.com/user-attachments/assets/e6954b9b-a2a6-4fe5-aadb-3d7c93d76e50)
+
+|**Part** | **Explanation** |
+|-|-|
+| **alert** | Specifies the action `Snort` should take when the rule is triggered (generate an alert). |
+| **tcp** | The protocol being monitored (`SSH` uses `TCP`). |
+| **any any** | Monitors traffic from any `source IP` and any `source port`. |
+| **->** | Arrow indicating traffic from Source to Destination. |
+| **any 22** | The `destination IP` is any, and the `destination port` is `22 (SSH service)`. |
+| **msg:"Possible SSH Brute Force"** | The message that appears in logs when this rule is triggered. |
+| **flags:S** | This rule looks for packets with the `SYN flag` set, meaning an attempt to establish a new connection. |
+| **threshold:type both, track by_src, count 5, seconds 60** | Triggers an alert immediately on the first match and then only if `5 or more connection attempts` occur from the same source within `60 seconds`. |
+| **sid:1000002** | `Snort Rule ID` (unique identifier for this rule) (must be >= 1000000 for custom rules). |
+| **rev:1** | `Rule revision number` (used for version tracking) (increment this number when modifying rules). |
+
+**✅ Detect HTTP Traffic Containing "cmd=" (Possible Command Injection)**
+
+This rule watches for `HTTP requests` containing (`cmd=`), often used in `web exploits`.
+
+|alert tcp any any -> any 80 (msg:"Suspicious HTTP Request"; content:"cmd="; nocase; sid:1000003; rev:1;) |
+|-|
+
+![image](https://github.com/user-attachments/assets/c189340b-bb37-4f82-b4b5-12404b113b46)
+
+|**Part** | **Explanation** |
+|-|-|
+| **alert** | Specifies the action `Snort` should take when the rule is triggered (generate an alert). |
+| **tcp** | The protocol being monitored (`HTTP` uses `TCP`). |
+| **any any** | Monitors traffic from any `source IP` and any `source port`. |
+| **->** | Arrow indicating traffic from Source to Destination. |
+| **any 80** | The `destination IP` is any, and the `destination port` is `80 (HTTP service)`. |
+| **msg:"Suspicious HTTP Request"** | The message that appears in logs when this rule is triggered. |
+| **content:“cmd=”** | This rule looks for the string `"cmd="` in `HTTP` traffic, which may indicate a command injection attempt. |
+| **nocase** | Makes the search case-insensitive, so it detects "CMD=", "Cmd=", etc. |
+| **sid:1000003** | `Snort Rule ID` (unique identifier for this rule) (must be >= 1000000 for custom rules). |
+| **rev:1** | `Rule revision number` (used for version tracking) (increment this number when modifying rules). |
+
+### 🔸Step 4: Enable Local Rules in Snort
+
+**🔵 Edit the Snort configuration file:** *`sudo nano /etc/snort/snort.conf`*
+
+Then, locate the section `(Step #7: Customize your rule set)`, scroll down and uncomment the line: `include $RULE_PATH/local.rules`, (remove the # if present).
+
+![image](https://github.com/user-attachments/assets/e253324e-defe-4d44-b6e8-93ae3ca91d93)
+
+### 🔸Step 5: Restart Snort to Apply Rules
+
+After adding rules, restart Snort to apply changes.
+
+**🔵 Restart Snort:** *`sudo systemctl restart snort`*
+
+![image](https://github.com/user-attachments/assets/942d987b-f624-4ec8-a46d-432fddb9947c)
+
+
+## 3. Testing Custom Snort Rules
+
+### 🔸Step 1: Setup Monitoring for Custom Rules 
+
+Run `Snort` in `Console Mode` to monitor rule triggers: 
+
+**🔵 Run Snort in Console Mode:** *`sudo snort -i enp0s3 -c /etc/snort/snort.conf -A console`*
+
+(**Note:** If necessary, replace `enp0s3` with your actual network interface name.)
+
+![image](https://github.com/user-attachments/assets/8afad84f-3c6a-4d60-ad8c-de676ea93fa1)
+
+If ran correctly, you should see `“Commencing packet processing”` as shown below. Leave this command running while testing the custom rules below. If you want to stop the command, type `CTR+Z`. 
+
+![image](https://github.com/user-attachments/assets/6f7a2b0e-4745-47de-9d1e-5912edf34f6f)
+
+In addition to monitoring alerts on `Console Mode`, check if `Snort` is logging real-time alerts on the `alert.log` file.
+
+**🔵 Check Snort Logging:** *`sudo tail -f /var/log/snort/alert.log`*
+
+🛑 If you encounter logging errors/failures, please go back and review the following steps to help resolve these issues:
+
+🔸 Step 5: Configure Console Mode and Log Alerts
+
+🔸 Step 6: Test Logging Output
+
+🔸 Step 7: Troubleshooting Logging Output
+
+### 🔸Step 2: Test Your Custom Rules 
+
+**🔵 To trigger the `ICMP` ping rule, ping your `Ubuntu VM` from another machine:** *`ping -c 4 <your_Ubuntu_VM_IP>`*
+
+For this exercise, I’ll use a `Kali Linux VM (IP Address: 10.0.2.4)` connected to the same `NAT Network` as this `Ubuntu VM (IP Address: 10.0.2.15)` within `VirtualBox`.
+
+**Kali Linux VM**
+
+![image](https://github.com/user-attachments/assets/ca14f3cc-9b42-4d14-aa27-5be6da7a232c)
+
+**Ubuntu VM (Console Mode)**
+
+![image](https://github.com/user-attachments/assets/3422a12b-4692-4ce5-a36f-b6ae8cf94f48)
+
+As a result, your `Ubuntu VM` should display `"ICMP Ping Detected"` while on `Console Mode`, triggered by the four pings sent from your other machine (in this case the `Kali Linux VM`) to the `Ubuntu VM`, as demonstrated above.
+
+If `Snort` is configured correctly, you should see alerts in `/var/log/snort/alert.log`.
+
+**Ubuntu VM (alert.log)**
+
+![image](https://github.com/user-attachments/assets/3e38f2c5-2314-423a-ae9e-c31ec0328393)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
