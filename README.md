@@ -93,7 +93,7 @@ Once logging is enabled and **`Snort`** is running, you can check alerts using t
 
 **✅ Good for troubleshooting:** Helps validate whether **`Snort`** is working correctly.
 
-However, plain text logging **lacks structure** for automated log analysis. If you plan to integrate **`Snort`** with log management or **`SIEM`** tools (e.g., **`Splunk`**, **`ELK Stack`**), **`JSON`** or **`Unified2`** formats are better choices, but they are introduced on **`Snort 3`**.
+However, `Plain Text` logging lacks structure for automated log analysis. If you plan to integrate **`Snort`** with log management or **`SIEM`** tools (e.g., **`Splunk`**, **`ELK Stack`**), **`JSON`** or **`Unified2`** formats are better choices, but they are introduced on **`Snort 3`**.
 
 #### 🟢 Enable PCAP Logging (For Packet Capture & Deep Analysis)
 
@@ -511,11 +511,13 @@ In addition to monitoring alerts on `Console Mode`, check if `Snort` is logging 
 
 ### 🔸Step 2: Test Your Custom Rules 
 
+For this exercise, I’ll use a `Kali Linux VM (IP Address: 10.0.2.4)` as the **"attacker machine"** connected to the same `NAT Network` as this `Ubuntu VM (IP Address: 10.0.2.15)` **"victim machine"**, within `VirtualBox`. Keep in mind that these custom rules can be triggered between any other VMs connected in the same `NAT Network` or from external traffic trying to communicate to any other VMs in the `NAT Network`. Of course this depends how the custom rules were written. In this case, the custom rules we establich will monitor traffic from any `source IP` and any `source port` to any `destination IP` and a specifed `destination port`, as long as the target is within our `NAT Network`. 
+
+**✅ Test for ICMP Ping (Ping Sweep)**
+
 **🔵 To trigger the `ICMP` ping rule, ping your `Ubuntu VM` from another machine:** *`ping -c 4 <your_Ubuntu_VM_IP>`*
 
-For this exercise, I’ll use a `Kali Linux VM (IP Address: 10.0.2.4)` connected to the same `NAT Network` as this `Ubuntu VM (IP Address: 10.0.2.15)` within `VirtualBox`.
-
-**Kali Linux VM**
+**Kali Linux VM (Attacker Machine)**
 
 ![image](https://github.com/user-attachments/assets/ca14f3cc-9b42-4d14-aa27-5be6da7a232c)
 
@@ -523,7 +525,7 @@ For this exercise, I’ll use a `Kali Linux VM (IP Address: 10.0.2.4)` connected
 
 ![image](https://github.com/user-attachments/assets/3422a12b-4692-4ce5-a36f-b6ae8cf94f48)
 
-As a result, your `Ubuntu VM` should display `"ICMP Ping Detected"` while on `Console Mode`, triggered by the four pings sent from your other machine (in this case the `Kali Linux VM`) to the `Ubuntu VM`, as demonstrated above.
+As a result, your `Ubuntu VM` should display `"ICMP Ping Detected"` while on `Console Mode`, triggered by the four pings sent from your **"attacker machine"** to the `Ubuntu VM`, as demonstrated above.
 
 If `Snort` is configured correctly, you should see alerts in `/var/log/snort/alert.log`.
 
@@ -531,19 +533,138 @@ If `Snort` is configured correctly, you should see alerts in `/var/log/snort/ale
 
 ![image](https://github.com/user-attachments/assets/3e38f2c5-2314-423a-ae9e-c31ec0328393)
 
+**✅ Test for SSH Brute Force Attempts**
 
+**🔵 To simulate an `SSH brute-force` attack, you can use the `Hydra` tool:** *`hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://<your_Ubuntu_VM_IP>`*
 
+![image](https://github.com/user-attachments/assets/f41dd439-d216-4d47-90a4-14f54d06e70a)
 
+If you encounter the error `“File for passwords not found”`, by default, `rockyou.txt` is stored in a compressed format `rockyou.txt.gz`. 
 
+Extract it with the command: *`sudo gunzip /usr/share/wordlists/rockyou.txt.gz`*
 
+You should see the `rockyou.txt` file on the path: **`/usr/share/wordlists/`**
 
+Next, in order for this test to work, make sure the `Uncomplicated Firewall (UFW)`, `SSH Service`, and `port 22 (SSH)` on your `Ubuntu VM` are enabled:
 
+**🔹Step 1: Install `OpenSSH Server`**
 
+**🔵 Check if OpenSSH Server is installed:** *`dpkg -l | grep openssh-server`*
 
+**🔵 If it’s not installed, install it using:** *`sudo apt update && sudo apt install openssh-server -y`*
 
+![image](https://github.com/user-attachments/assets/a9386c7e-822f-45a1-a60b-20d23868d80d)
 
+`OpenSSH Server` is a component of the `Open Secure Shell (SSH)` suite, which enables secure remote access, file transfers, and command execution over an encrypted connection via `SSH` protocol.
 
+**🔹Step 2: Start and enable `SSH Service`**
 
+**🔵 Ensure `SSH service` is running:** *`sudo systemctl start ssh`*
+
+**🔵 Enable `SSH Service`:** *`sudo systemctl enable ssh`*
+
+**🔵 Check status of `SSH Service`:** *`sudo systemctl status ssh`*
+
+![image](https://github.com/user-attachments/assets/75ecfccb-8c4b-42ee-9f60-0c06bcf5d3fa)
+
+If the status returns as active, then `SSH` is running.
+
+**🔹 Step 3: Allow `SSH Port 22` in the Firewall (UFW).**
+
+`UFW (Uncomplicated Firewall)` is a user-friendly command-line interface for managing iptables, the default firewall system in Linux. It simplifies firewall rule management, making it easier to configure network security on Ubuntu and other Debian-based systems.
+
+**🔵 Check status of UFW:** *`sudo ufw status`*
+
+If it’s inactive, activate it and allow `Port 22` for `SSH`.
+
+**🔵 Allow Port 22:** *`sudo ufw allow 22/tcp`*
+
+**🔵 Enable UFW:** *`sudo ufw enable`*
+
+**🔵 Check status of UFW:** *`sudo ufw status`*
+
+![image](https://github.com/user-attachments/assets/bc969f68-7ad5-4e3e-9c6d-9ad5b07e8be6)
+
+Lastly, test for SSH Brute Force attack again. 
+
+**🔵 Simulate SSH Brute Force attack:** *`hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://<your_Ubuntu_VM_IP>`*
+
+**Kali Linux VM (Attacker Machine)**
+
+![image](https://github.com/user-attachments/assets/b1861378-29e6-457a-9c81-42f78113b019)
+
+**Ubuntu VM (Console Mode)**
+
+![image](https://github.com/user-attachments/assets/2dca2bb0-113e-4751-b31a-44afb2c512ee)
+
+As a result, `Snort` should display `"Possible SSH Brute Force"` on your `Ubuntu VM` while in `Console Mode`, triggered from your other machine, in this case the `Kali Linux VM` to the `Ubuntu VM`, as shown above.
+
+If `Snort` logging is configured correctly, you should see alerts in `/var/log/snort/alert.log`, as shown below.
+
+**Ubuntu VM (alert.log)**
+
+![image](https://github.com/user-attachments/assets/003ccad9-8abd-46da-99d2-af0a0fc31e85)
+
+**✅ Test for HTTP Traffic Containing "cmd=" (Possible Command Injection)**
+
+**🔹 Step 1: Start and enable `HTTP Server` (`Apache2`)**
+
+An `HTTP Server` must be running on your `Ubuntu VM`, if not, you need to install, start, and enable `Apache2 `to open `port 80`. Run the following commands.
+
+**🔵 Update and Install Apache2:** *`sudo apt update && sudo apt install apache2 -y`*
+
+**🔵 Start Apache2:** *`sudo systemctl start apache2`*
+
+**🔵 Enable Apache2:** *`sudo systemctl enable apache2`*
+
+This installs `Apache2` and ensures it starts automatically on boot.
+
+**🔵 Check the status of Apache2:** *`sudo systemctl status apache2`*
+
+![image](https://github.com/user-attachments/assets/c66e8137-deff-4ad2-a1d5-eb6866d63b18)
+
+If the status returns as active, then `HTTP Server`(`Apache2`) is running.
+
+**🔹 Step 2: Allow `HTTP Port 80` in the Firewall (UFW)**
+
+**🔵 Check status of UFW:** *`sudo ufw status`*
+
+If it’s inactive, activate it and allow `Port 80` for `HTTP`.
+
+**🔵 Allow Port 80:** *`sudo ufw allow 80/tcp`*
+
+**🔵 Enable UFW:** *`sudo ufw enable`*
+
+**🔵 Check status of UFW:** *`sudo ufw status`*
+
+![image](https://github.com/user-attachments/assets/485ed0e4-59b0-440a-8903-3a1215dc0822)
+
+**🔹 Step 3: Simulate HTTP Traffic Containing "cmd="** 
+
+Simulate `HTTP` traffic and the intended attack using `curl`, which is a command used to send `HTTP` requests and retrieve responses from the command line.
+
+**🔵 Simulate HTTP Traffic Containing "cmd=":** *`curl http://<your_Ubuntu_VM_IP>?cmd=id`*
+
+**Kali Linux VM (Attacker Machine)**
+
+![image](https://github.com/user-attachments/assets/233f83b4-e2b2-49bd-86b5-e3c7a2204416)
+
+`Snort` should detect `"cmd="` and trigger the alert `“Suspicious HTTP Request”`, as shown below.
+
+**Ubuntu VM (Console Mode)**
+
+![image](https://github.com/user-attachments/assets/475141da-9044-4fb5-8b39-8c630d25832e)
+
+If `Snort` logging is configured correctly, you should see alerts in `/var/log/snort/alert.log`, as shown below.
+
+**Ubuntu VM (alert.log)**
+
+![image](https://github.com/user-attachments/assets/92b4e87b-4039-48b7-b2ae-832377a4327a)
+
+## 4. Conclusion
+
+🚀 Congratulations! `Snort` is now carefully configured with logging and custom rules!
+With these rules in place, `Snort` can actively monitor your `VM NAT network`, detect potential attacks, unauthorized access attempts, and malicious activity, helping you strengthen the security of your home lab. Fine-tune your rules as needed, create more complex rules, and keep exploring new ways to enhance your network defense! 🔥
 
 
 
