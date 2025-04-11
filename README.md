@@ -1,4 +1,4 @@
-# Snort Logging Setup and Custom Rules on Ubuntu VM
+# Snort Logging and Custom Rule Setup on Ubuntu VM
 
 ## Objective
 **`Snort`** is a powerful open-source **`Intrusion Detection and Prevention System (IDS/IPS)`** designed to analyze network traffic and detect potential threats in real time. This comprehensive guide walks you through the step-by-step process of configuring **`Snort`** logging and custom rule creation within an **`Ubuntu VM`** running on a **`VirtualBox`** home lab. By following this guide, you’ll gain hands-on experience in monitoring network activity, identifying security threats, and fine-tuning **`Snort’s`** detection capabilities to generate custom alerts for suspicious behavior, enhancing both your cybersecurity skills and your ability to respond to real-world attacks.
